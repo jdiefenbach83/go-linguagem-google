@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -24,7 +26,7 @@ func main() {
 		case 1:
 			startMonitoring()
 		case 2:
-			fmt.Println("Exibindo Logs...")
+			printLogs()
 		case 0:
 			fmt.Println("Saindo do programa")
 			os.Exit(0)
@@ -84,8 +86,10 @@ func testSite(site string) {
 
 	if response.StatusCode == 200 {
 		fmt.Println("Site: ", site, " was loaded with success!")
+		saveLog(site, true)
 	} else {
 		fmt.Println("Site: ", site, " has problems! Status code:", response.StatusCode)
+		saveLog(site, false)
 	}
 }
 
@@ -112,4 +116,29 @@ func readSitesFromFile() []string {
 	file.Close()
 
 	return sites
+}
+
+func saveLog(site string, status bool) {
+	file, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+
+	if err != nil {
+		fmt.Println("An error has occuried to save log:", err)
+	}
+
+	datetime := time.Now().Format("02/01/2006 15:04:05")
+	file.WriteString(datetime + " - " + site + " - online:" + strconv.FormatBool(status) + "\n")
+
+	file.Close()
+}
+
+func printLogs() {
+	fmt.Println("Exibindo Logs...")
+
+	file, err := ioutil.ReadFile("log.txt")
+
+	if err != nil {
+		fmt.Println("An error has occuried to print log:", err)
+	}
+
+	fmt.Println(string(file))
 }
